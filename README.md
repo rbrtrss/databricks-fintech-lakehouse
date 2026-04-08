@@ -109,11 +109,11 @@ Recommended audit outputs:
 
 ## Workflow Design
 A typical Databricks Workflow can be organized into six tasks:
-1. Ingest bronze raw data and log row counts
-2. Build silver reference entities such as customers, accounts, and FX
-3. Build silver transactional tables and rejected-row outputs
-4. Run `dbt` Silver and Gold models on Databricks SQL or a job cluster
-5. Refresh gold marts for reporting
+1. Run setup to create the catalog and Bronze/Silver/Gold schemas
+2. Ingest bronze raw data and log row counts
+3. Build silver reference entities such as customers, accounts, and FX
+4. Build silver transactional tables and rejected-row outputs
+5. Run `dbt` Silver and Gold models on Databricks SQL or a job cluster
 6. Run validation and audit checks
 
 ## Example Local Development Commands
@@ -130,6 +130,19 @@ uv run dbt parse --project-dir dbt
 ```
 
 `dbt` connection settings should come from environment variables and a local copy of `dbt/profiles.yml.example`.
+
+## Databricks Bootstrap
+Before running Bronze ingestion in Databricks, create the catalog and schemas. The repository now includes [00_setup_catalogs.py](/home/roberto/databricks-fintech-lakehouse/notebooks/00_setup_catalogs.py), which creates:
+- `main.bronze`
+- `main.silver`
+- `main.gold`
+
+Typical usage in Databricks:
+```python
+main(spark)
+```
+
+Then run [01_bronze_ingestion.py](/home/roberto/databricks-fintech-lakehouse/notebooks/01_bronze_ingestion.py) with a valid `source_root` that points to your synced repo in Databricks Repos.
 
 ## Current Modeling Notes
 - `silver_transactions` deduplicates by `transaction_id` and keeps the latest `updated_at` plus `ingested_at`
