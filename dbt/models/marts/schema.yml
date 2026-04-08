@@ -15,3 +15,24 @@ models:
       - name: revenue_month
         tests:
           - not_null
+
+  - name: gold_suspicious_activity_signals
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: signal_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['LARGE_SETTLED_PURCHASE', 'INTERNATIONAL_PURCHASE', 'MULTI_CHANNEL_24H']
+      - name: risk_level
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['HIGH', 'MEDIUM']

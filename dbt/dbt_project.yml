@@ -9,6 +9,9 @@ macro-paths: ["macros"]
 seed-paths: ["seeds"]
 test-paths: ["tests"]
 
+vars:
+  allowed_transaction_statuses: ["PENDING", "SETTLED", "FAILED", "REVERSED"]
+
 models:
   fintech_lakehouse:
     bronze:

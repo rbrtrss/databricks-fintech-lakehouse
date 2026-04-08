@@ -73,10 +73,19 @@ enriched as (
 valid_rows as (
     select *
     from enriched
-    where customer_id is not null
-      and status in ('PENDING', 'SETTLED', 'FAILED', 'REVERSED')
-      and transaction_timestamp <= coalesce(record_updated_at, ingested_at)
-      and (transaction_type <> 'PURCHASE' or amount > 0)
+    where {{
+        transaction_rejection_reason(
+            customer_id_col='customer_id',
+            status_col='status',
+            transaction_timestamp_col='transaction_timestamp',
+            updated_at_col='record_updated_at',
+            ingested_at_col='ingested_at',
+            transaction_type_col='transaction_type',
+            amount_col='amount',
+            currency_col='currency',
+            exchange_rate_col='exchange_rate'
+        )
+    }} is null
       and amount_usd is not null
 )
 
@@ -103,8 +112,16 @@ select
 from valid_rows
 
 {% if is_incremental() %}
-where record_updated_at >= (
-    select coalesce(max(record_updated_at), cast('1900-01-01' as timestamp))
-    from {{ this }}
+where not exists (
+    select 1
+    from {{ this }} as existing
+    where existing.transaction_id = valid_rows.transaction_id
+      and (
+          existing.record_updated_at > valid_rows.record_updated_at
+          or (
+              existing.record_updated_at = valid_rows.record_updated_at
+              and coalesce(existing.ingested_at, cast('1900-01-01' as timestamp)) >= coalesce(valid_rows.ingested_at, cast('1900-01-01' as timestamp))
+          )
+      )
 )
 {% endif %}

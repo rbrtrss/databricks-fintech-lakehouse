@@ -57,9 +57,15 @@ The repository now includes an end-to-end slice for:
 Implemented outputs:
 - Bronze tables: `bronze_customers_raw`, `bronze_accounts_raw`, `bronze_transactions_raw`, `bronze_fx_rates_raw`
 - Silver tables: `silver_customers`, `silver_accounts`, `silver_transactions`, `silver_fx_rates`, `silver_transactions_rejected`
-- Gold outputs: `gold_fact_transactions`, `gold_daily_customer_spend`, `gold_monthly_revenue`
+- Gold outputs: `gold_fact_transactions`, `gold_daily_customer_spend`, `gold_monthly_revenue`, `gold_suspicious_activity_signals`
 
 The generated sample data includes realistic behaviors for incremental processing and validation: updated customer and account records, duplicate transaction IDs with later status changes, a late-arriving transaction, an invalid account reference, a future-dated transaction, and FX-driven USD normalization.
+
+Local test coverage now includes transaction-flow assertions that verify the sample batches split into accepted and rejected transaction outputs with the expected latest-record behavior, rejection reasons, FX normalization, and international transaction flags.
+It also includes incremental-selection tests that protect against skipping late-arriving transaction IDs simply because their `updated_at` is older than the current global maximum in the target table.
+Transaction acceptance and rejection rules are now centralized in two places by execution layer: Python tests and local helpers use `src.validations.transactions.classify_transaction_rejection`, while `dbt` models use the shared macro in `dbt/macros/transaction_rules.sql`.
+Suspicious-activity coverage now verifies sample-data signals for large settled purchases, international settled purchases, and mixed-channel settled purchase activity within 24 hours for the same customer.
+The orchestration notebooks after Bronze are now executable Python wrappers that build or run the intended `dbt` commands instead of existing only as comments.
 
 ## Development Model
 Use this repository as the source of truth and treat Databricks as the execution platform.
@@ -83,15 +89,17 @@ Build conformed entities such as `silver_customers`, `silver_accounts`, `silver_
 Expose the first analytical outputs:
 - Fact: `gold_fact_transactions`
 - Marts: `gold_daily_customer_spend`, `gold_monthly_revenue`
+- Risk mart: `gold_suspicious_activity_signals`
 
 ## Core Business Questions
 - How much transaction volume did the fintech process per day?
 - Which customers are most active by value and transaction count?
 - What share of settled transactions are international?
 - How do failed transaction rates and fee revenue change over time?
+- Which settled purchases should be flagged for simple suspicious-activity review?
 
 ## Incremental Processing Strategy
-Bronze is append-only and loads only new source batches. Silver uses Delta `MERGE INTO` patterns keyed by `customer_id`, `account_id`, `transaction_id`, and `(rate_date, base_currency, quote_currency)` to insert new records and update changed ones. Gold currently rebuilds table outputs from the conformed Silver layer.
+Bronze is append-only and loads only new source batches. Silver uses Delta `MERGE INTO` patterns keyed by `customer_id`, `account_id`, `transaction_id`, and `(rate_date, base_currency, quote_currency)` to insert new records and update changed ones. For transactions, incremental selection should compare candidate rows against the current target by `transaction_id` plus `(record_updated_at, ingested_at)` ordering rather than relying on a single global watermark, so new late-arriving keys are not skipped. Gold currently rebuilds table outputs from the conformed Silver layer.
 
 ## Data Quality Rules
 Representative checks include:
@@ -116,6 +124,8 @@ A typical Databricks Workflow can be organized into six tasks:
 5. Run `dbt` Silver and Gold models on Databricks SQL or a job cluster
 6. Run validation and audit checks
 
+The repository notebooks `02` through `06` now expose executable `main()` functions that either print the exact `dbt` command they will run or execute it when called with `execute=True`. These wrappers are intended for Databricks job or notebook environments where `dbt` is available directly on the execution image. Local development should continue to use `uv run dbt ...`.
+
 ## Example Local Development Commands
 Use `uv` for local dependency management and execution.
 
@@ -129,7 +139,7 @@ uv run pytest tests/
 uv run dbt parse --project-dir dbt
 ```
 
-`dbt` connection settings should come from environment variables and a local copy of `dbt/profiles.yml.example`.
+`dbt` connection settings should come from environment variables and a local, untracked copy of `dbt/profiles.yml.example` saved as `dbt/profiles.yml`. For local runs, prefer `uv run dbt ...`; the orchestration notebook wrappers intentionally emit bare `dbt ...` commands for Databricks execution contexts.
 
 ## Databricks Bootstrap
 Before running Bronze ingestion in Databricks, create the catalog and schemas. The repository now includes [00_setup_catalogs.py](/home/roberto/databricks-fintech-lakehouse/notebooks/00_setup_catalogs.py), which creates:
@@ -149,6 +159,7 @@ Then run [01_bronze_ingestion.py](/home/roberto/databricks-fintech-lakehouse/not
 - `silver_transactions` joins accounts for `customer_id` and FX rates for `amount_usd`
 - `silver_transactions_rejected` captures invalid account references, invalid statuses, future timestamps, non-positive purchase amounts, and missing FX rates
 - `gold_fact_transactions` derives a simple placeholder revenue rule of `1%` of USD amount for settled purchase transactions
+- `gold_suspicious_activity_signals` currently flags large settled purchases, international settled purchases, and mixed-channel settled purchase activity within a 24-hour window
 
 ## Future Improvements
 - Add transfers, fees, cards, and merchants end to end

@@ -10,7 +10,8 @@ models:
       - name: customer_status
         tests:
           - accepted_values:
-              values: ['ACTIVE', 'DORMANT', 'SUSPENDED']
+              arguments:
+                values: ['ACTIVE', 'DORMANT', 'SUSPENDED']
 
   - name: silver_accounts
     columns:
@@ -22,8 +23,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('silver_customers')
-              field: customer_id
+              arguments:
+                to: ref('silver_customers')
+                field: customer_id
 
   - name: silver_fx_rates
     columns:
@@ -44,12 +46,14 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('silver_accounts')
-              field: account_id
+              arguments:
+                to: ref('silver_accounts')
+                field: account_id
       - name: status
         tests:
           - accepted_values:
-              values: ['PENDING', 'SETTLED', 'FAILED', 'REVERSED']
+              arguments:
+                values: ['PENDING', 'SETTLED', 'FAILED', 'REVERSED']
       - name: amount_usd
         tests:
           - not_null

@@ -44,14 +44,19 @@ enriched as (
 classified as (
     select
         *,
-        case
-            when customer_id is null then 'INVALID_ACCOUNT'
-            when status not in ('PENDING', 'SETTLED', 'FAILED', 'REVERSED') then 'INVALID_STATUS'
-            when transaction_timestamp > coalesce(updated_at, ingested_at) then 'FUTURE_TIMESTAMP'
-            when transaction_type = 'PURCHASE' and amount <= 0 then 'NON_POSITIVE_PURCHASE_AMOUNT'
-            when currency <> 'USD' and exchange_rate is null then 'MISSING_FX_RATE'
-            else null
-        end as rejection_reason
+        {{
+            transaction_rejection_reason(
+                customer_id_col='customer_id',
+                status_col='status',
+                transaction_timestamp_col='transaction_timestamp',
+                updated_at_col='updated_at',
+                ingested_at_col='ingested_at',
+                transaction_type_col='transaction_type',
+                amount_col='amount',
+                currency_col='currency',
+                exchange_rate_col='exchange_rate'
+            )
+        }} as rejection_reason
     from enriched
 )
 
