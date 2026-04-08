@@ -1,0 +1,13 @@
+[project]
+name = "databricks-fintech-lakehouse"
+version = "0.1.0"
+description = "Databricks fintech lakehouse with local Python utilities and dbt analytics models"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "dbt-databricks>=1.9.0",
+    "pytest>=8.0.0",
+]

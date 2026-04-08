@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: bronze
+    tables:
+      - name: bronze_customers_raw
+      - name: bronze_accounts_raw
+      - name: bronze_transactions_raw
+      - name: bronze_fx_rates_raw

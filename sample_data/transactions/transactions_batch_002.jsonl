@@ -1,0 +1,4 @@
+{"transaction_id": "T002", "account_id": "A002", "transaction_timestamp": "2026-02-01T11:00:00Z", "updated_at": "2026-02-02T09:00:00Z", "transaction_type": "PURCHASE", "channel": "CARD", "amount": 240.0, "currency": "BRL", "status": "SETTLED"}
+{"transaction_id": "T005", "account_id": "A001", "transaction_timestamp": "2026-01-31T23:55:00Z", "updated_at": "2026-02-03T08:00:00Z", "transaction_type": "PURCHASE", "channel": "APP", "amount": 89.3, "currency": "EUR", "status": "SETTLED"}
+{"transaction_id": "T006", "account_id": "A003", "transaction_timestamp": "2027-01-01T00:00:00Z", "updated_at": "2026-02-03T08:10:00Z", "transaction_type": "PURCHASE", "channel": "CARD", "amount": 42.0, "currency": "ARS", "status": "SETTLED"}
+{"transaction_id": "T007", "account_id": "A001", "transaction_timestamp": "2026-02-03T13:10:00Z", "updated_at": "2026-02-03T13:20:00Z", "transaction_type": "PURCHASE", "channel": "CARD", "amount": -10.0, "currency": "USD", "status": "FAILED"}

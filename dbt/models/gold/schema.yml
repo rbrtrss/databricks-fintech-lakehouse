@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: gold_fact_transactions
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        tests:
+          - not_null
+      - name: amount_usd
+        tests:
+          - not_null

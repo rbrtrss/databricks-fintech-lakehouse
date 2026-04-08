@@ -1,0 +1,2 @@
+{"account_id": "A001", "customer_id": "C001", "account_type": "CHECKING", "account_currency": "USD", "opened_at": "2026-01-05T10:05:00Z", "updated_at": "2026-01-05T10:05:00Z", "account_status": "ACTIVE"}
+{"account_id": "A002", "customer_id": "C002", "account_type": "WALLET", "account_currency": "BRL", "opened_at": "2026-01-11T13:45:00Z", "updated_at": "2026-01-11T13:45:00Z", "account_status": "ACTIVE"}

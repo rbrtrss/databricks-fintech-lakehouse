@@ -1,0 +1,21 @@
+name: fintech_lakehouse
+version: 1.0.0
+config-version: 2
+
+profile: fintech_lakehouse
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+models:
+  fintech_lakehouse:
+    bronze:
+      +materialized: view
+    silver:
+      +materialized: incremental
+    gold:
+      +materialized: table
+    marts:
+      +materialized: table

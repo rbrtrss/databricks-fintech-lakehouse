@@ -1,0 +1,1 @@
+-- Gold mart placeholder for suspicious activity signals.

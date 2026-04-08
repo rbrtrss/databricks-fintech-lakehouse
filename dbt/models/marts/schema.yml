@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: gold_daily_customer_spend
+    columns:
+      - name: transaction_date
+        tests:
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: gold_monthly_revenue
+    columns:
+      - name: revenue_month
+        tests:
+          - not_null
