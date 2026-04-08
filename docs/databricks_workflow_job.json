@@ -1,0 +1,127 @@
+{
+  "name": "fintech-lakehouse-pipeline",
+  "max_concurrent_runs": 1,
+  "parameters": [
+    {
+      "name": "repo_workspace_path",
+      "default": "/Workspace/Repos/<user-or-service-principal>/databricks-fintech-lakehouse"
+    },
+    {
+      "name": "dbt_project_dir",
+      "default": "dbt"
+    },
+    {
+      "name": "dbt_profiles_dir",
+      "default": "dbt"
+    },
+    {
+      "name": "batch_id",
+      "default": "workflow_batch"
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "setup_catalogs",
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/00_setup_catalogs_runner"
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    },
+    {
+      "task_key": "bronze_ingestion",
+      "depends_on": [
+        {
+          "task_key": "setup_catalogs"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/01_bronze_ingestion_runner",
+        "base_parameters": {
+          "source_root": "{{job.parameters.repo_workspace_path}}",
+          "batch_id": "{{job.parameters.batch_id}}"
+        }
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    },
+    {
+      "task_key": "silver_entities",
+      "depends_on": [
+        {
+          "task_key": "bronze_ingestion"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/02_silver_entities_runner",
+        "base_parameters": {
+          "project_dir": "{{job.parameters.dbt_project_dir}}",
+          "profiles_dir": "{{job.parameters.dbt_profiles_dir}}"
+        }
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    },
+    {
+      "task_key": "silver_transactions",
+      "depends_on": [
+        {
+          "task_key": "silver_entities"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/03_silver_transactions_runner",
+        "base_parameters": {
+          "project_dir": "{{job.parameters.dbt_project_dir}}",
+          "profiles_dir": "{{job.parameters.dbt_profiles_dir}}"
+        }
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    },
+    {
+      "task_key": "gold_fact",
+      "depends_on": [
+        {
+          "task_key": "silver_transactions"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/04_gold_fact_runner",
+        "base_parameters": {
+          "project_dir": "{{job.parameters.dbt_project_dir}}",
+          "profiles_dir": "{{job.parameters.dbt_profiles_dir}}"
+        }
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    },
+    {
+      "task_key": "gold_marts",
+      "depends_on": [
+        {
+          "task_key": "gold_fact"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/05_gold_marts_runner",
+        "base_parameters": {
+          "project_dir": "{{job.parameters.dbt_project_dir}}",
+          "profiles_dir": "{{job.parameters.dbt_profiles_dir}}"
+        }
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    },
+    {
+      "task_key": "data_quality_checks",
+      "depends_on": [
+        {
+          "task_key": "gold_marts"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "{{job.parameters.repo_workspace_path}}/notebooks/06_data_quality_checks_runner",
+        "base_parameters": {
+          "project_dir": "{{job.parameters.dbt_project_dir}}",
+          "profiles_dir": "{{job.parameters.dbt_profiles_dir}}"
+        }
+      },
+      "existing_cluster_id": "<existing-cluster-id-or-replace-with-job-cluster>"
+    }
+  ]
+}

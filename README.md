@@ -126,6 +126,24 @@ A typical Databricks Workflow can be organized into six tasks:
 
 The repository notebooks `02` through `06` now expose executable `main()` functions that either print the exact `dbt` command they will run or execute it when called with `execute=True`. These wrappers are intended for Databricks job or notebook environments where `dbt` is available directly on the execution image. Local development should continue to use `uv run dbt ...`.
 
+The repo also includes Databricks job runner notebooks for each stage:
+- [00_setup_catalogs_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/00_setup_catalogs_runner.py)
+- [01_bronze_ingestion_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/01_bronze_ingestion_runner.py)
+- [02_silver_entities_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/02_silver_entities_runner.py)
+- [03_silver_transactions_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/03_silver_transactions_runner.py)
+- [04_gold_fact_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/04_gold_fact_runner.py)
+- [05_gold_marts_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/05_gold_marts_runner.py)
+- [06_data_quality_checks_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/06_data_quality_checks_runner.py)
+
+Use [databricks_workflow_job.json](/home/roberto/databricks-fintech-lakehouse/docs/databricks_workflow_job.json) as a Databricks Jobs API or UI template. Before creating the job, replace:
+- `{{job.parameters.repo_workspace_path}}` with your actual Databricks Repos path if your import flow does not support job parameters directly
+- `<existing-cluster-id-or-replace-with-job-cluster>` with your compute choice
+
+The job template expects:
+- the repo to be synced into Databricks Repos
+- `dbt` to be available on the execution environment for stages `02` through `06`
+- `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, and `DATABRICKS_TOKEN` to be available for the `dbt` steps
+
 ## Example Local Development Commands
 Use `uv` for local dependency management and execution.
 
@@ -153,6 +171,8 @@ main(spark)
 ```
 
 Then run [01_bronze_ingestion.py](/home/roberto/databricks-fintech-lakehouse/notebooks/01_bronze_ingestion.py) with a valid `source_root` that points to your synced repo in Databricks Repos.
+
+If you want a one-off executable wrapper in Databricks without modifying the source module, use [00_setup_catalogs_runner.py](/home/roberto/databricks-fintech-lakehouse/notebooks/00_setup_catalogs_runner.py). It loads [00_setup_catalogs.py](/home/roberto/databricks-fintech-lakehouse/notebooks/00_setup_catalogs.py) and calls `main(spark)` explicitly.
 
 ## Current Modeling Notes
 - `silver_transactions` deduplicates by `transaction_id` and keeps the latest `updated_at` plus `ingested_at`
